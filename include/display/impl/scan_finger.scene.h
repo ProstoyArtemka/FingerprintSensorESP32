@@ -8,6 +8,10 @@
 
 class ScanFingerScene : public Scene {
 
+    int fingerprintID = -1;
+    long lastGotID = 0;
+    int scanDelay = 0;
+
     Fingerprint *fingerprint;
 
     Sprite scanFingerSprite;
@@ -15,11 +19,12 @@ class ScanFingerScene : public Scene {
     public:
         ScanFingerScene(Display *display, Sprite *buffer, Fingerprint *fingerprint);
 
+        void drawText(int fingerprintId);
+
         void setup() override;
         void draw() override;
 
         bool buttonRelease() override;
-
 };
 
 #endif

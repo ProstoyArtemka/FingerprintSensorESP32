@@ -10,13 +10,15 @@
 #include <display/impl/empty.scene.h>
 #include <display/impl/info.scene.h>
 #include <display/impl/scan_finger.scene.h>
+#include <display/impl/add_finger.scene.h>
 
 enum Scenes {
     EMPTY_SCENE, 
     MAIN_SCENE, 
     SENSOR_NOT_FOUND_SCENE,
     INFO_SCENE,
-    SCAN_FINGER_SCENE
+    SCAN_FINGER_SCENE,
+    ADD_FINGER_SCENE
 };
 
 class SceneHandler {
@@ -24,15 +26,14 @@ class SceneHandler {
     Display *display;
     Sprite *buffer;
     
-    Scene *currentScene;
-    Scenes currentSceneIndex;
-
     Scene *scenes[16];
     int sceneTransitions[16];
 
     bool sceneChanged = true;
 
     public:
+        Scene *currentScene;
+        int currentSceneIndex;
 
         SceneHandler(Display *display, Sprite *buffer, Fingerprint *fingerprint);
 

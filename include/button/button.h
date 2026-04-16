@@ -11,6 +11,9 @@ class Button {
 
     bool buttonPressed = false;
 
+    std::function<void()> buttonPressedForFuncs[10];
+    bool alreadyPresssedFor[10];
+
     std::function<void()> releaseFunc;
     bool releaseFuncSet = false;
 
@@ -19,6 +22,7 @@ class Button {
 
         void tick();
 
+        void buttonPressedFor(int seconds, std::function<void()> func);
         void onRelease(std::function<void()> func);
 };
 

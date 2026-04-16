@@ -7,11 +7,12 @@
 
 class Fingerprint : Adafruit_Fingerprint {
     bool enabled;
+    int lastId = 0;
 
-    Preferences prefs;
+    Preferences &prefs;
 
     public:
-        Fingerprint(Preferences prefs);
+        Fingerprint(Preferences &prefs);
 
         void init();
 
@@ -21,7 +22,19 @@ class Fingerprint : Adafruit_Fingerprint {
         int getCapacity();
         int getAmount();
         int getLastId();
+        void incrementLastId();
+
+        uint8_t getImage();
+        uint8_t image2Tz(int slot);
+        uint8_t fingerFastSearch();
+        uint8_t createModel();
+        uint8_t storeModel(int id);
+
+        int getFingerprintID();
+        int getConfidence();
         
+        int scanFingerprint();
+        void clearFingerprints();
 
 };
 

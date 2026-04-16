@@ -13,6 +13,7 @@ Preferences prefs;
 Display display = Display();
 Fingerprint fingerprint = Fingerprint(prefs);
 long lastCheckedSensor = 0;
+int lastSceneIndex = -1;
 
 Sprite buffer = Sprite(&display, display.getSize());
 
@@ -22,6 +23,17 @@ SceneHandler sceneHandler = SceneHandler(&display, &buffer, &fingerprint);
 
 void buttonReleased() {
   sceneHandler.buttonRelease();
+}
+
+void buttonPressedFor5Seconds() {
+  if (!sceneHandler.isScene(ADD_FINGER_SCENE)) return;
+
+  fingerprint.clearFingerprints();
+
+  AddFingerScene* scene = static_cast<AddFingerScene*>(sceneHandler.currentScene);
+  if (scene != nullptr) {
+    scene->removedFingerprints = true;
+  }
 }
 
 void setup() {
@@ -39,6 +51,7 @@ void setup() {
   fingerprint.init();
 
   button.onRelease(buttonReleased);
+  button.buttonPressedFor(5, buttonPressedFor5Seconds);
 
   display.display_init();
   buffer.initSprite(false);
@@ -49,32 +62,31 @@ void setup() {
 
 }
 
-void sensor() {
-  if (!sceneHandler.isScene(3, MAIN_SCENE, EMPTY_SCENE, SENSOR_NOT_FOUND_SCENE)) return;
+void checkSensorState() {
 
-  if (millis() - lastCheckedSensor >= 250 && (sceneHandler.isScene(2, MAIN_SCENE, EMPTY_SCENE))) {
+  if (millis() - lastCheckedSensor >= 500) {
     fingerprint.retry();
 
     lastCheckedSensor = millis();
   }
 
-  if (!fingerprint.isEnabled()) {
-    sceneHandler.changeScene(SENSOR_NOT_FOUND_SCENE, false);
+  if (fingerprint.isEnabled() && lastSceneIndex != -1) {
 
-    return;
+    sceneHandler.changeScene((Scenes) lastSceneIndex, false);
+    lastSceneIndex = -1;
   }
 
-  if (fingerprint.isEnabled()) {
-    sceneHandler.changeScene(MAIN_SCENE, false);
+  if (!fingerprint.isEnabled() && !sceneHandler.isScene(SENSOR_NOT_FOUND_SCENE)) {
+    lastSceneIndex = sceneHandler.currentSceneIndex;
 
-    return;
+    sceneHandler.changeScene(SENSOR_NOT_FOUND_SCENE, false);
   }
 
 }
 
 void loop() {
 
-  sensor();
+  checkSensorState();
 
   sceneHandler.tick();
   button.tick();

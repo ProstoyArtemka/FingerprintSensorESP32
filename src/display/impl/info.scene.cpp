@@ -10,6 +10,7 @@ InfoScene::InfoScene(Display *display, Sprite *buffer, Fingerprint *fingerprint)
     infoSprite.initSprite(true);
     infoSprite.writeImage(info);
 
+    infoSprite.position = Vector2i(30);
 }
 
 void InfoScene::setup() { }
@@ -18,14 +19,13 @@ void InfoScene::draw() {
 
     buffer->fillSprite(TFT_BLACK);
 
-    infoSprite.position = Vector2i(30);
     infoSprite.pushTransformed(buffer, ST_WITHOUT_ROTATION | ST_WITHOUT_SCALING);
 
+
+    
     int centerX = (display->getSize().x / 2);
 
     buffer->drawString("Информация", centerX + 10, 30);
-
-
 
     char str[60];
     sprintf(str, "Вместимость: %d", fingerprint->getCapacity());

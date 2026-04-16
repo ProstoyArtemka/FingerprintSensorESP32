@@ -10,6 +10,7 @@ SceneHandler::SceneHandler(Display *display, Sprite *buffer, Fingerprint *finger
     scenes[SENSOR_NOT_FOUND_SCENE] = new SensorNotFoundScene(display, buffer);
     scenes[INFO_SCENE] = new InfoScene(display, buffer, fingerprint);
     scenes[SCAN_FINGER_SCENE] = new ScanFingerScene(display, buffer, fingerprint);
+    scenes[ADD_FINGER_SCENE] = new AddFingerScene(display, buffer, fingerprint);
 
     changeScene(MAIN_SCENE, true);
 
@@ -19,7 +20,8 @@ SceneHandler::SceneHandler(Display *display, Sprite *buffer, Fingerprint *finger
     setTransition(MAIN_SCENE, INFO_SCENE);
 
     setTransition(INFO_SCENE, SCAN_FINGER_SCENE);
-    setTransition(SCAN_FINGER_SCENE, MAIN_SCENE);
+    setTransition(SCAN_FINGER_SCENE, ADD_FINGER_SCENE);
+    setTransition(ADD_FINGER_SCENE, MAIN_SCENE);
 }
 
 SceneHandler::~SceneHandler() {
@@ -63,6 +65,7 @@ bool SceneHandler::isScene(int count, ...){
     va_start(args, count);
 
     for (int i = 0; i < count; i++) {
+
         int value = va_arg(args, int);
 
         if (currentSceneIndex == value) {
@@ -83,7 +86,6 @@ void SceneHandler::setTransition(Scenes from, Scenes to) {
 
 void SceneHandler::transitionScene() {
     int transition = sceneTransitions[currentSceneIndex];
-    Serial.println(transition);
 
     if (transition == -1) return; 
 

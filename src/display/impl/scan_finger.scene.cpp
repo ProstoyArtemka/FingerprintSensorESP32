@@ -5,7 +5,7 @@
 #include <Math.h>
 #include <Fingerprint.h>
 
-ScanFingerScene::ScanFingerScene(Display *display, Sprite *buffer, Fingerprint *fingerprint) : Scene(display, buffer), scanFingerSprite(buffer, Vector2i(scanFingerWidth, scanFingerHeight)) {
+ScanFingerScene::ScanFingerScene(Display *display, Sprite *buffer, Fingerprint *fingerprint) : Scene(display, buffer), scanFingerSprite(buffer, Vector2i(scanFingerWidth, scanFingerHeight)), fingerprint(fingerprint) {
 
     scanFingerSprite.initSprite(true);
 
@@ -14,25 +14,60 @@ ScanFingerScene::ScanFingerScene(Display *display, Sprite *buffer, Fingerprint *
 
 }
 
-void ScanFingerScene::setup() {
+void ScanFingerScene::setup() {}
 
-    buffer->fillSprite(TFT_BLACK);
+void ScanFingerScene::drawText( int fingerprintID) {
 
     int centerX = display->getSize().x / 2;
     int posY = (display->getSize().y / 1.5);
 
-    buffer->drawString("Отсканируйте палец", centerX, posY + 21);
-    buffer->drawString("Режим определения", centerX, posY + 46);
+    if (fingerprintID == -1) {
+        buffer->drawString("Отсканируйте палец", centerX, posY);
+        buffer->drawString("режим определения", centerX, posY + 25);
+
+        return;
+    }
+
+    if (fingerprintID == -2) {
+        buffer->setColor(TFT_RED);
+
+        buffer->drawString("Отпечаток не найден", centerX, posY);
+        buffer->drawString("в памяти", centerX, posY + 25);
+
+        buffer->setColor(TFT_WHITE);
+
+        return;
+    }
+
+    buffer->setColor(TFT_BLUE);
+    buffer->drawString("Отпечаток найден!", centerX, posY);
+    buffer->setColor(TFT_WHITE);
+
+
+    char str[40];
+    sprintf(str, "номер: %d", fingerprintID);
+    buffer->drawString(str, centerX, posY + 25);
+
+}
+
+void ScanFingerScene::draw() {
+
+    buffer->fillSprite(TFT_BLACK);
+
+    if (millis() - lastGotID >= 300 + scanDelay) {
+        
+        this->fingerprintID = this->fingerprint->scanFingerprint();
+
+        lastGotID = millis();
+        scanDelay = (this->fingerprintID == -1) ? 0 : 2000;
+    }
+
+    drawText(this->fingerprintID);
 
     scanFingerSprite.pushTransformed(buffer, ST_WITHOUT_ROTATION | ST_WITHOUT_SCALING);
 
     buffer->pushSprite(0, 0);
     display->display();
-}
-
-void ScanFingerScene::draw() {
-
-
 
 }
 
