@@ -1,0 +1,9 @@
+SCK -> 12
+SDA -> 11
+RES -> 41
+DC -> 42
+
+BUTTON -> 40
+
+SENSOR_BLUE -> 18
+SENSOR_WHITE -> 17

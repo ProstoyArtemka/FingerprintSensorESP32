@@ -47,7 +47,9 @@ void ScanFingerScene::drawText( int fingerprintID) {
     char str[40];
     sprintf(str, "номер: %d", fingerprintID);
     buffer->drawString(str, centerX, posY + 25);
-
+    
+    sprintf(str, "точность: %d", fingerprint->getConfidence());
+    buffer->drawString(str, centerX, posY + 50);
 }
 
 void ScanFingerScene::draw() {

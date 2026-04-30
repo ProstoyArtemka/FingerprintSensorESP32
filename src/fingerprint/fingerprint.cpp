@@ -1,13 +1,17 @@
 #include <fingerprint/fingerprint.h>
 #include <Arduino.h>
-#include <Adafruit_Fingerprint.h>
 
-Fingerprint::Fingerprint(Preferences &prefs) : Adafruit_Fingerprint(&Serial2), prefs(prefs) {}
+Fingerprint::Fingerprint(Preferences &prefs) : FPM(&Serial2), prefs(prefs) {}
 
 void Fingerprint::init() {
+    Serial2.setRxBufferSize(4096);
     Serial2.begin(57600, SERIAL_8N1, 17, 18);
 
-    enabled = verifyPassword();
+    enabled = begin();
+    if (!enabled) return;
+
+    readParams(&params);
+
 
     prefs.begin("fingerprint");
 
@@ -17,8 +21,6 @@ void Fingerprint::init() {
     this->lastId = prefs.getInt("lastId");
     
     prefs.end();
-
-    Adafruit_Fingerprint::deleteModel(5);
 }
 
 bool Fingerprint::isEnabled() {
@@ -27,18 +29,18 @@ bool Fingerprint::isEnabled() {
 
 void Fingerprint::retry() {
 
-    enabled = verifyPassword();
+    enabled = verifyPassword(0);
 
 }
 
 int Fingerprint::getCapacity() {
-    return this->capacity;
+    return this->params.capacity;
 }
 
 int Fingerprint::getAmount() {
-    Adafruit_Fingerprint::getTemplateCount();
+    this->getTemplateCount(&tempalteCount);
 
-    return this->templateCount;
+    return tempalteCount;
 }
 
 int Fingerprint::getLastId() {
@@ -56,24 +58,24 @@ void Fingerprint::incrementLastId() {
 }
 
 
-uint8_t Fingerprint::getImage() {
-    return Adafruit_Fingerprint::getImage();
+FPMStatus Fingerprint::getImage() {
+    return FPM::getImage();
 }
 
-uint8_t Fingerprint::image2Tz(int slot) {
-    return Adafruit_Fingerprint::image2Tz(slot);
+FPMStatus Fingerprint::image2Tz(int slot) {
+    return FPM::image2Tz(slot);
 }
 
-uint8_t Fingerprint::fingerFastSearch() {
-    return Adafruit_Fingerprint::fingerFastSearch();
+FPMStatus Fingerprint::fingerFastSearch(int slot) {
+    return FPM::searchDatabase(&fingerprintId, &confidence, slot);
 }
 
-uint8_t Fingerprint::createModel() {
-    return Adafruit_Fingerprint::createModel();
+FPMStatus Fingerprint::createModel() {
+    return FPM::generateTemplate();
 }
 
-uint8_t Fingerprint::storeModel(int id) {
-    return Adafruit_Fingerprint::storeModel(id);
+FPMStatus Fingerprint::storeModel(int id, int slot) {
+    return FPM::storeTemplate(id, slot);
 }
 
 int Fingerprint::getConfidence() {
@@ -81,18 +83,18 @@ int Fingerprint::getConfidence() {
 }
 
 int Fingerprint::getFingerprintID() {
-    return fingerID;
+    return fingerprintId;
 }
 
 int Fingerprint::scanFingerprint() {
-    int status = getImage();
-    if (status != FINGERPRINT_OK) return -1;
+    FPMStatus status = getImage();
+    if (status != FPMStatus::OK) return -1;
 
     status = image2Tz(1);
-    if (status != FINGERPRINT_OK) return -1;
+    if (status != FPMStatus::OK) return -1;
 
-    status = fingerFastSearch();
-    if (status != FINGERPRINT_OK) return -2;
+    status = fingerFastSearch(1);
+    if (status != FPMStatus::OK) return -2;
 
     return getFingerprintID();
 }
@@ -105,4 +107,33 @@ void Fingerprint::clearFingerprints() {
     prefs.begin("fingerprint");
     prefs.putInt("lastId", lastId);
     prefs.end();
+}
+
+// Usage after getImage
+FPMStatus Fingerprint::saveToLittleFS(const char* filename) {
+
+    while (Serial2.available()) Serial2.read();
+
+    if (downloadImage() == FPMStatus::OK) {
+        File file = LittleFS.open(filename, FILE_WRITE);
+        if (!file) return FPMStatus::NOTFOUND;
+
+        uint8_t packet[FPM_MAX_PACKET_LEN]; 
+        uint16_t readLen;
+        bool isComplete = false;
+
+        while (!isComplete) {
+            if (readDataPacket(packet, NULL, &readLen, &isComplete)) {
+                file.write(packet, readLen);
+
+                yield();
+            }
+        }
+
+        file.close();
+
+        return FPMStatus::OK;
+    }
+
+    return FPMStatus::NOTFOUND;
 }

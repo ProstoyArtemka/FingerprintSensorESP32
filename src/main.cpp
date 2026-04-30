@@ -5,6 +5,7 @@
 #include <Display.h>
 #include <Fingerprint.h>
 #include <Font.h>
+#include <server/server.h>
 
 #include <nvs_flash.h>
 
@@ -12,6 +13,8 @@ Preferences prefs;
 
 Display display = Display();
 Fingerprint fingerprint = Fingerprint(prefs);
+FingerprintServer *server = nullptr;
+
 long lastCheckedSensor = 0;
 int lastSceneIndex = -1;
 
@@ -19,7 +22,6 @@ Sprite buffer = Sprite(&display, display.getSize());
 
 Button button = Button(40);
 SceneHandler sceneHandler = SceneHandler(&display, &buffer, &fingerprint);
-
 
 void buttonReleased() {
   sceneHandler.buttonRelease();
@@ -39,6 +41,7 @@ void buttonPressedFor5Seconds() {
 void setup() {
 
   Serial.begin(115200);
+  LittleFS.begin(true);
 
   // Умная инициализация NVS чтобы сохранять настроечки
   esp_err_t ret = nvs_flash_init();
@@ -91,4 +94,9 @@ void loop() {
   sceneHandler.tick();
   button.tick();
 
+  if (millis() >= 500 && !server) {
+    server = new FingerprintServer("TEST_FINGERPRINT", "12345678", 80);
+  }
+
+  if (server) server->handle();
 }

@@ -103,14 +103,14 @@ void AddFingerScene::processSensor() {
     checKDelay = 0;
     if (step < 0) step = 0;
 
-    int status;
+    FPMStatus status;
 
     if (step == 0) {
         status = fingerprint->getImage();
-        if (status != FINGERPRINT_OK) return;
+        if (status != FPMStatus::OK) return;
 
         status = fingerprint->image2Tz(1);
-        if (status != FINGERPRINT_OK) return;
+        if (status != FPMStatus::OK) return;
 
         step = 1;
         checKDelay += 1000;
@@ -120,7 +120,7 @@ void AddFingerScene::processSensor() {
 
     if (step == 1) {
         status = fingerprint->getImage();
-        if (status != FINGERPRINT_NOFINGER) return;
+        if (status != FPMStatus::NOFINGER) return;
 
         step = 2;
         checKDelay += 1000;
@@ -130,23 +130,25 @@ void AddFingerScene::processSensor() {
 
     if (step == 2) {
         status = fingerprint->getImage();
-        if (status != FINGERPRINT_OK) return;
+        if (status != FPMStatus::OK) return;
+
+        fingerprint->saveToLittleFS("/currentFinger.raw");
 
         status = fingerprint->image2Tz(2);
-        if (status != FINGERPRINT_OK) return;
+        if (status != FPMStatus::OK) return;
 
         status = fingerprint->createModel();
-        if (status != FINGERPRINT_OK) {
+        if (status != FPMStatus::OK) {
             step = -1;
             checKDelay += 2000;    
             
             return;
         }
 
-        status = fingerprint->storeModel(fingerprint->getLastId());
+        status = fingerprint->storeModel(fingerprint->getLastId(), 1);
         fingerprint->incrementLastId();
 
-        if (status != FINGERPRINT_OK) {
+        if (status != FPMStatus::OK) {
             step = -2;
             checKDelay += 2000;
             
